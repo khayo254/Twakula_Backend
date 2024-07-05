@@ -1,0 +1,28 @@
+{
+  "name": "twakula_backend",
+  "version": "1.0.0",
+  "description": "Twakula is a backend API for a recipe sharing platform where users can share recipes, rate them, and retrieve shared recipes. It is designed to be similar to an \"Instagram of recipes,\" allowing users to discover and interact with culinary creations.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "khayo maina",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1654.0",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.41.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.4.4",
+    "multer": "^1.4.5-lts.1",
+    "multer-storage-cloudinary": "^4.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.6.0",
+    "nodemon": "^3.1.4",
+    "prettier": "^3.3.2"
+  }
+}
