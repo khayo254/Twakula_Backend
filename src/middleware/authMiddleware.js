@@ -1,25 +1,28 @@
 const jwt = require('jsonwebtoken');
 
 const verifyToken = (req, res, next) => {
-  // Check if token is provided in the headers
-  const token = req.headers['authorization'];
+  const authHeader = req.headers['authorization'];
+  console.log('Authorization Header:', authHeader);
+
+  if (!authHeader) {
+    return res.status(401).json({ message: 'Access denied. No token provided.' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  console.log('Extracted Token:', token);
 
   if (!token) {
     return res.status(401).json({ message: 'Access denied. No token provided.' });
   }
 
   try {
-    // Verify and decode the token using your JWT_SECRET
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Attach the decoded user information to the request object
-    req.user = decoded;
-
-    // Proceed to the next middleware or route handler
+    console.log('Decoded Token:', decoded);
+    req.user = decoded.user;
     next();
   } catch (error) {
-    // Return an error if token verification fails
-    return res.status(403).json({ message: 'Invalid token' });
+    console.error('Token Verification Error:', error);
+    res.status(403).json({ message: 'Invalid token' });
   }
 };
 

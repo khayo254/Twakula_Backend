@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const verifyToken = require('../middleware/authMiddleware'); // Import verifyToken middleware
+const verifyToken = require('../middleware/authMiddleware');
+const roleMiddleware = require('../middleware/roleMiddleware');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
@@ -8,37 +9,33 @@ const User = require('../models/User');
 
 // Route to register a new user
 router.post('/register', [
-  // Validate user registration data
   body('username').notEmpty().withMessage('Username is required'),
   body('email').isEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long')
 ], async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, role } = req.body; // Ensure role is extracted from req.body if needed
 
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    // Check if the email is already registered
     let user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ message: 'Email already exists' });
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create a new user instance
+    // Default role to 'user' if not provided
     user = new User({
       username,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      role: role || 'user'
     });
 
-    // Save the user to the database
     await user.save();
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
@@ -49,36 +46,33 @@ router.post('/register', [
 
 // Route to login a user
 router.post('/login', [
-  // Validate user login data
   body('email').isEmail().withMessage('Valid email is required'),
   body('password').notEmpty().withMessage('Password is required')
 ], async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Compare hashed password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Generate JWT token
+    // Include role in JWT payload
     const payload = {
       user: {
         id: user.id,
-        username: user.username
+        username: user.username,
+        role: user.role
       }
     };
 
@@ -93,10 +87,9 @@ router.post('/login', [
   }
 });
 
-// Protected route example
+// Protected route to get user profile
 router.get('/profile', verifyToken, async (req, res) => {
   try {
-    // Access user info from decoded token
     const user = await User.findById(req.user.id).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -108,7 +101,8 @@ router.get('/profile', verifyToken, async (req, res) => {
   }
 });
 
-router.get('/', verifyToken, async (req, res) => {
+// Protected admin route
+router.get('/admin', verifyToken, roleMiddleware(['admin']), async (req, res) => {
   try {
     const users = await User.find();
     res.status(200).json(users);
