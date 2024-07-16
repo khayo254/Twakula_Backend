@@ -13,7 +13,7 @@ router.post('/register', [
   body('email').isEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long')
 ], async (req, res) => {
-  const { username, email, password, role } = req.body; // Ensure role is extracted from req.body if needed
+  const { username, email, password, role } = req.body;
 
   try {
     const errors = validationResult(req);
@@ -28,7 +28,6 @@ router.post('/register', [
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Default role to 'user' if not provided
     user = new User({
       username,
       email,
@@ -67,7 +66,6 @@ router.post('/login', [
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Include role in JWT payload
     const payload = {
       user: {
         id: user.id,
@@ -87,7 +85,22 @@ router.post('/login', [
   }
 });
 
-// Protected route to get user profile
+// Protected route to get user profile by user ID
+router.get('/profile/:userId', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Protected route to get logged-in user profile
 router.get('/profile', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');

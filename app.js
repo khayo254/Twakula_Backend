@@ -1,12 +1,18 @@
 const express = require('express');
 const app = express();
 require('dotenv').config();
-const mongoose = require('./src/database');
+const connectDB = require('./src/config/db');
 const userRoutes = require('./src/routes/userRoutes');
+const recipeRoutes = require('./src/routes/recipeRoutes');
+
+// Connect to the database
+connectDB();
 
 app.use(express.json());
 
+// Routes
 app.use('/api/users', userRoutes);
+app.use('/api/recipes', recipeRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
