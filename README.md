@@ -50,8 +50,6 @@ Twakula is a backend API for a recipe sharing platform where users can share rec
      PORT=3000
      MONGO_URI=mongodb://localhost:27017/twakula
      JWT_SECRET=your_jwt_secret
-     AWS_ACCESS_KEY_ID=your_aws_access_key_id
-     AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
      CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
      CLOUDINARY_API_KEY=your_cloudinary_api_key
      CLOUDINARY_API_SECRET=your_cloudinary_api_secret
