@@ -6,7 +6,7 @@ const recipeSchema = new Schema({
   description: { type: String, required: true },
   ingredients: { type: [String], required: true },
   steps: { type: [String], required: true },
-  images: { type: [String] },
+  images: { type: [String] }, // Field for storing image URLs
   authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   ratings: [{
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -15,9 +15,7 @@ const recipeSchema = new Schema({
     createdAt: { type: Date, default: Date.now }
   }],
   cuisine: { type: String }, // Add cuisine field for categorization
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
+}, { timestamps: true }); // Enable timestamps for createdAt and updatedAt
 
 // Index definitions for text search and performance
 recipeSchema.index({ title: 'text', ingredients: 'text', cuisine: 'text' });
