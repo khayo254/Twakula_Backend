@@ -5,22 +5,24 @@ const connectDB = require('./src/config/db');
 const userRoutes = require('./src/routes/userRoutes');
 const recipeRoutes = require('./src/routes/recipeRoutes');
 const { errorMiddleware, notFoundMiddleware } = require('./src/middleware/errorMiddleware');
-const { AppError } = require('./src/utils/errors');
+const cors = require('cors');
+const path = require('path'); // Import path module
 
 // Connect to the database
 connectDB();
 
-// Middleware to parse JSON
+app.use(cors());
 app.use(express.json());
+
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/recipes', recipeRoutes);
 
-// Handle 404 - Not Found
+// Handle 404 error
 app.use(notFoundMiddleware);
-
-// Global error handling middleware
 app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 4000;
@@ -29,4 +31,3 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
-

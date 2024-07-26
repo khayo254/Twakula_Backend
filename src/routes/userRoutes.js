@@ -1,128 +1,134 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
-const verifyToken = require('../middleware/authMiddleware');
-const roleMiddleware = require('../middleware/roleMiddleware');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
-const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { AppError, ValidationError } = require('../utils/errors');
+const verifyToken = require('../middleware/authMiddleware');
+const Joi = require('joi');
+const { deleteUser } = require('../controllers/userController'); // Import deleteUser
 
-// Route to register a new user
-router.post('/register', [
-  body('username').notEmpty().withMessage('Username is required'),
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long')
-], async (req, res) => {
-  const { username, email, password, role } = req.body;
+const registerSchema = Joi.object({
+  name: Joi.string().required(),
+  email: Joi.string().email().required(),
+  password: Joi.string().min(6).required()
+});
+
+const loginSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().required()
+});
+
+// User registration route
+router.post('/register', async (req, res, next) => {
+  const { error } = registerSchema.validate(req.body);
+  if (error) {
+    return next(new ValidationError(error.details[0].message));
+  }
+
+  const { name, email, password } = req.body;
 
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return next(new ValidationError('User already exists'));
     }
 
-    let user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({ message: 'Email already exists' });
-    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    user = new User({
-      username,
+    const user = await User.create({
+      name,
       email,
-      password: hashedPassword,
-      role: role || 'user'
+      password: hashedPassword
     });
 
-    await user.save();
-    res.status(201).json({ message: 'User registered successfully' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      token
+    });
   } catch (error) {
-    console.error('Error registering user:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(new AppError('Error registering user', 500));
   }
 });
 
-// Route to login a user
-router.post('/login', [
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('password').notEmpty().withMessage('Password is required')
-], async (req, res) => {
+// User login route
+router.post('/login', async (req, res, next) => {
+  const { error } = loginSchema.validate(req.body);
+  if (error) {
+    return next(new ValidationError(error.details[0].message));
+  }
+
   const { email, password } = req.body;
 
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+
+    if (user && (await bcrypt.compare(password, user.password))) {
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        token
+      });
+    } else {
+      return next(new ValidationError('Invalid email or password'));
     }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    const payload = {
-      user: {
-        id: user.id,
-        username: user.username,
-        role: user.role
-      }
-    };
-
-    jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
-      if (err) throw err;
-      res.status(200).json({ token });
-    });
-
   } catch (error) {
-    console.error('Error logging in user:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(new AppError('Error logging in user', 500));
   }
 });
 
-// Protected route to get user profile by user ID
-router.get('/profile/:userId', verifyToken, async (req, res) => {
+// Suggested users route
+router.get('/suggested', verifyToken, async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.userId).select('-password');
-    if (!user) {
-      return res.status(404).json({ msg: 'User not found' });
-    }
-
-    res.json(user);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Protected route to get logged-in user profile
-router.get('/profile', verifyToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.status(200).json(user);
+    const currentUserId = req.user.id;
+    const suggestedUsers = await User.find({ _id: { $ne: currentUserId } }).limit(10);
+    res.status(200).json(suggestedUsers);
   } catch (error) {
-    console.error('Error fetching user profile:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(new AppError('Error fetching suggested users', 500));
   }
 });
 
-// Protected admin route
-router.get('/admin', verifyToken, roleMiddleware(['admin']), async (req, res) => {
+// Search users route
+router.get('/search', verifyToken, async (req, res, next) => {
+  const { query } = req.query;
+  if (!query) {
+    return next(new ValidationError('Search query is required'));
+  }
+
+  try {
+    const users = await User.find({ name: { $regex: query, $options: 'i' } });
+    res.status(200).json(users);
+  } catch (error) {
+    next(new AppError('Error searching users', 500));
+  }
+});
+
+// Fetch all users route (admin use only)
+router.get('/users', verifyToken, async (req, res, next) => {
   try {
     const users = await User.find();
     res.status(200).json(users);
   } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(new AppError('Error fetching users', 500));
   }
 });
+
+router.get('/me', verifyToken, async (req, res, next) => {
+  try {
+    res.json(req.user);
+  } catch (error) {
+    next(new AppError('Error fetching user data', 500));
+  }
+});
+
+router.delete('/:id', verifyToken, deleteUser); // Ensure deleteUser is correctly imported
 
 module.exports = router;

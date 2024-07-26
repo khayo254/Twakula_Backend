@@ -55,3 +55,32 @@ exports.getRecipeById = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+exports.getTrendingRecipes = async (req, res) => {
+  const { limit = 10 } = req.query;
+
+  try {
+    // Find recipes sorted by average rating and creation date
+    const trendingRecipes = await Recipe.aggregate([
+      {
+        $addFields: {
+          averageRating: { $avg: "$ratings.rating" }
+        }
+      },
+      {
+        $sort: {
+          averageRating: -1,
+          createdAt: -1
+        }
+      },
+      {
+        $limit: parseInt(limit)
+      }
+    ]);
+
+    res.json(trendingRecipes);
+  } catch (error) {
+    console.error('Error fetching trending recipes:', error.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
