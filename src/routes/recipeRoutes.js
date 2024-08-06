@@ -1,109 +1,28 @@
 const express = require('express');
 const router = express.Router();
-const Recipe = require('../models/Recipe');
-const fetchRecipes = require('../utils/fetchRecipes');
+const recipeController = require('../controllers/recipeController');
 const verifyToken = require('../middleware/authMiddleware');
-const { upload, optimizeImage } = require('../config/multerConfig');
-const { AppError, ValidationError } = require('../utils/errors');
-const Joi = require('joi');
+const { upload } = require('../config/multerConfig');
 
-// Joi schema for validation
-const recipeSchema = Joi.object({
-  title: Joi.string().required(),
-  description: Joi.string().required(),
-  ingredients: Joi.string().required(),
-  steps: Joi.string().required(),
-  authorId: Joi.string().required()
-});
 
-router.post('/add_new_recipe', upload.array('images', 5), async (req, res, next) => {
-  const { error } = recipeSchema.validate(req.body);
-  if (error) {
-    return next(new ValidationError(error.details[0].message));
-  }
+// Route for adding a new recipe with image uploads
+router.post('/add_new_recipe', verifyToken, upload.array('images', 5), recipeController.addNewRecipe);
 
-  const { title, description, ingredients, steps, authorId } = req.body;
-  try {
-    const imageUrls = req.files.map(file => file.path);
+// Route for fetching recipes to explore
+router.get('/explore', recipeController.exploreRecipes);
 
-    const newRecipe = new Recipe({
-      title,
-      description,
-      ingredients: ingredients.split(','),
-      steps: steps.split(','),
-      images: imageUrls,
-      authorId
-    });
+// Route for rating a recipe
+router.post('/:id/rate', verifyToken, recipeController.rateRecipe);
 
-    const savedRecipe = await newRecipe.save();
-    res.status(201).json(savedRecipe);
-  } catch (error) {
-    next(new AppError('Error saving recipe', 500));
-  }
-});
+// Route for uploading a single image for a recipe
+router.post('/:id/upload-image', upload.single('image'), recipeController.uploadImage);
 
-router.post('/:id/rate', verifyToken, async (req, res, next) => {
-  const schema = Joi.object({
-    rating: Joi.number().integer().min(1).max(5).required(),
-    comment: Joi.string().min(5).required()
-  });
+// Route for fetching all recipes
+router.get('/', recipeController.getAllRecipes);
 
-  const { error } = schema.validate(req.body);
-  if (error) {
-    return next(new ValidationError(error.details[0].message));
-  }
+// Route for fetching a single recipe by ID
+router.get('/:id', recipeController.getRecipeById);
 
-  const { id } = req.params;
-  const { rating, comment } = req.body;
-
-  try {
-    const recipe = await Recipe.findById(id);
-    if (!recipe) {
-      return next(new AppError('Recipe not found', 404));
-    }
-
-    const userId = req.user ? req.user.id : null;
-
-    const newRating = {
-      userId,
-      rating,
-      comment,
-      createdAt: new Date()
-    };
-
-    recipe.ratings.push(newRating);
-
-    const totalRatings = recipe.ratings.length;
-    const sumRatings = recipe.ratings.reduce((sum, r) => sum + r.rating, 0);
-    recipe.averageRating = sumRatings / totalRatings;
-
-    await recipe.save();
-
-    res.status(201).json({ message: 'Rating added successfully', recipe });
-  } catch (error) {
-    next(new AppError('Error adding rating', 500));
-  }
-});
-
-router.post('/:id/upload-image', upload.single('image'), async (req, res, next) => {
-  try {
-    const recipeId = req.params.id;
-    const imageUrl = req.file.path;
-
-    const recipe = await Recipe.findByIdAndUpdate(recipeId, { $push: { images: imageUrl } }, { new: true });
-
-    if (!recipe) {
-      return next(new AppError('Recipe not found', 404));
-    }
-
-    res.json({ message: 'Image uploaded successfully', recipe });
-  } catch (error) {
-    next(new AppError('Error uploading image', 500));
-  }
-});
-
-router.get('/', fetchRecipes.getAllRecipes);
-
-router.get('/:id', fetchRecipes.getRecipeById);
+router.get('/trending', recipeController.getTrendingRecipes);
 
 module.exports = router;

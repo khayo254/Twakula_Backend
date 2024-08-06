@@ -150,9 +150,6 @@ Twakula is a backend API for a recipe sharing platform where users can share rec
 - **Purpose**: Storing and serving recipe images.
 - **Features**: Scalable storage, high durability and availability, fine-grained access control, and data encryption.
 
-### **Cloudinary**
-- **Purpose**: Cloud-based storage for images with dynamic transformations.
-- **Features**: Image management, real-time modifications, global delivery via CDN, and advanced features like dynamic watermarking and facial recognition.
 
 ## Contributing
 
@@ -174,7 +171,3 @@ Twakula is a backend API for a recipe sharing platform where users can share rec
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-This README provides a comprehensive overview of the Twakula project, including setup instructions, API endpoints, database schema, and more. Feel free to modify it as per your project needs.

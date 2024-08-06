@@ -6,7 +6,7 @@ const recipeSchema = new Schema({
   description: { type: String, required: true },
   ingredients: { type: [String], required: true },
   steps: { type: [String], required: true },
-  images: { type: [String] }, // Field for storing image URLs
+  images: { type: [String] },
   authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   ratings: [{
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },

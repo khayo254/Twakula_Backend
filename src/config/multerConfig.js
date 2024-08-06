@@ -3,6 +3,7 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 
+// Define the storage configuration for multer
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadPath = 'uploads/';
@@ -17,6 +18,7 @@ const storage = multer.diskStorage({
   }
 });
 
+// Define file filter to allow only image files
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
   if (!allowedTypes.includes(file.mimetype)) {
@@ -27,6 +29,7 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
+// Define multer upload configuration
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
@@ -35,6 +38,7 @@ const upload = multer({
   }
 });
 
+// Define function to optimize images using sharp
 const optimizeImage = async (filePath) => {
   const optimizedImagePath = `uploads/optimized-${Date.now()}.jpeg`;
 
