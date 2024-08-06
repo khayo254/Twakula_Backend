@@ -18,7 +18,10 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-async-handler": "^1.2.0",
+<<<<<<< HEAD
     "express-session": "^1.18.0",
+=======
+>>>>>>> 0ecca78133a30955eaae48fc52acde2156397f4e
     "express-validator": "^7.1.0",
     "formidable": "^3.5.1",
     "glob": "^11.0.0",

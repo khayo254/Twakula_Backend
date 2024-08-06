@@ -7,7 +7,10 @@ const recipeRoutes = require('./src/routes/recipeRoutes');
 const { errorMiddleware, notFoundMiddleware } = require('./src/middleware/errorMiddleware');
 const cors = require('cors');
 const path = require('path'); // Import path module
+<<<<<<< HEAD
 const { AppError, ValidationError } = require('./src/utils/errors'); // Correctly import AppError and ValidationError
+=======
+>>>>>>> 0ecca78133a30955eaae48fc52acde2156397f4e
 
 // Connect to the database
 connectDB();

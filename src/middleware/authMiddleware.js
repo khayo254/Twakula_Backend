@@ -10,7 +10,11 @@ const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+<<<<<<< HEAD
     req.user = decoded; // Assuming the decoded token contains user details
+=======
+    req.user = decoded; // Assuming decoded token contains user details
+>>>>>>> 0ecca78133a30955eaae48fc52acde2156397f4e
     next();
   } catch (error) {
     next(new AppError('Invalid token', 401));

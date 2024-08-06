@@ -6,7 +6,11 @@ const { upload } = require('../config/multerConfig');
 
 
 // Route for adding a new recipe with image uploads
+<<<<<<< HEAD
 router.post('/add_new_recipe', verifyToken, upload.array('images', 5), recipeController.addNewRecipe);
+=======
+router.post('/add_new_recipe', upload.array('images', 5), recipeController.addNewRecipe);
+>>>>>>> 0ecca78133a30955eaae48fc52acde2156397f4e
 
 // Route for fetching recipes to explore
 router.get('/explore', recipeController.exploreRecipes);

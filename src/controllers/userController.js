@@ -1,10 +1,13 @@
 const expressAsyncHandler = require('express-async-handler');
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
+<<<<<<< HEAD
 const { AppError, ValidationError } = require('../utils/errors');
 
 // Define the registerUser function
 const bcrypt = require('bcryptjs');
+=======
+>>>>>>> 0ecca78133a30955eaae48fc52acde2156397f4e
 
 // Define the registerUser function
 const registerUser = expressAsyncHandler(async (req, res) => {
@@ -17,6 +20,7 @@ const registerUser = expressAsyncHandler(async (req, res) => {
     throw new Error('User already exists');
   }
 
+<<<<<<< HEAD
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -24,6 +28,12 @@ const registerUser = expressAsyncHandler(async (req, res) => {
     name,
     email,
     password: hashedPassword,
+=======
+  const user = await User.create({
+    name,
+    email,
+    password,
+>>>>>>> 0ecca78133a30955eaae48fc52acde2156397f4e
   });
 
   if (user) {
@@ -39,8 +49,12 @@ const registerUser = expressAsyncHandler(async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
 
 // loginUser function
+=======
+// Example loginUser function
+>>>>>>> 0ecca78133a30955eaae48fc52acde2156397f4e
 const loginUser = expressAsyncHandler(async (req, res) => {
   const { email, password } = req.body;
 

@@ -171,3 +171,4 @@ Twakula is a backend API for a recipe sharing platform where users can share rec
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
