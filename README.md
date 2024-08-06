@@ -2,7 +2,7 @@
 
 Welcome to Twakula! 🎉 A backend API designed for a recipe sharing platform, where you can share your favorite recipes, rate them, and discover new culinary delights. Think of it as the "Instagram of recipes" for food enthusiasts!
 
-![Twakula Logo](./Twakula.png) <!-- Your logo image -->
+![Twakula Logo](./Twakula.png)
 
 ## Table of Contents
 
